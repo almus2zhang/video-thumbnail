@@ -31,3 +31,5 @@ ridiculous bug in PyAV which nobody cares. I would really appreciate it if someo
 2 运行后第一个输入处理的目录，第二个输入输出目录，会按照原有目录结构在输出目录下创建
 
 3 可以自行修改大小以及不想要的信息
+
+4 生成文件名增加-pythumb 方便统一搜索处理
