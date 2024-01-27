@@ -9,12 +9,14 @@ import av
 from PIL import Image, ImageFont, ImageDraw
 
 # Tune these settings...
-IMAGE_PER_ROW = 5
+IMAGE_PER_ROW = 4
 IMAGE_ROWS = 7
 PADDING = 5
 FONT_SIZE = 16
-IMAGE_WIDTH = 1536
-FONT_NAME = "HelveticaNeue.ttc"
+IMAGE_WIDTH = 5536
+#FONT_NAME = "HelveticaNeue.ttc"
+FONT_NAME = "/movie4/video/video/msyh.ttc"
+
 BACKGROUND_COLOR = "#fff"
 TEXT_COLOR = "#000"
 TIMESTAMP_COLOR = "#fff"
@@ -28,16 +30,27 @@ def get_random_filename(ext):
     return ''.join([random.choice(string.ascii_lowercase) for _ in range(20)]) + ext
 
 
-def create_thumbnail(filename):
+def create_thumbnail(filename, dirname):
     print('Processing:', filename)
 
-    jpg_name = '%s.jpg' % filename
+    jpg_name = '%s-pythumb.jpg' % filename
+    savedir = '%s%s/' % (op,dirname)
+    print('save to ',savedir)
+    try:
+      os.makedirs(savedir)
+      print("create success", savedir)
+    except FileExistsError:
+      print(savedir,"exist")
+    except Exception as e:
+      print("create err：", str(e))
+    os.chdir(savedir)
     if os.path.exists(jpg_name):
         print('Thumbnail assumed exists!')
         return
-
+    os.chdir(dirname)    
     _, ext = os.path.splitext(filename)
-    random_filename = get_random_filename(ext)
+    #random_filename = get_random_filename(ext)
+    random_filename = filename
     random_filename_2 = get_random_filename(ext)
     print('Rename as %s to avoid decode error...' % random_filename)
     try:
@@ -51,6 +64,7 @@ def create_thumbnail(filename):
             container = av.open(random_filename_2)
 
         metadata = [
+            "Dir: %s" % dirname,
             "File name: %s" % filename,
             "Size: %d bytes (%.2f MB)" % (container.size, container.size / 1048576),
             "Duration: %s" % get_time_display(container.duration // 1000000),
@@ -70,12 +84,14 @@ def create_thumbnail(filename):
                 break
 
         width, height = images[0][0].width, images[0][0].height
-        metadata.append('Video: (%dpx, %dpx), %dkbps' % (width, height, container.bit_rate // 1024))
+        #metadata.append('Video: (%dpx, %dpx), %dkbps' % (width, height, container.bit_rate // 1024))
 
         img = Image.new("RGB", (IMAGE_WIDTH, IMAGE_WIDTH), BACKGROUND_COLOR)
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype(FONT_NAME, FONT_SIZE)
-        _, min_text_height = draw.textsize("\n".join(metadata), font=font)
+        font = ImageFont.truetype(FONT_NAME, FONT_SIZE*4)
+        #_, min_text_height = draw.textsize("\n".join(metadata), font=font)
+        bbox = draw.textbbox((0, 0), "\n".join(metadata), font=font)
+        min_text_height = bbox[3] - bbox[1]
         image_width_per_img = int(round((IMAGE_WIDTH - PADDING) / IMAGE_PER_ROW)) - PADDING
         image_height_per_img = int(round(image_width_per_img / width * height))
         image_start_y = PADDING * 2 + min_text_height
@@ -93,8 +109,9 @@ def create_thumbnail(filename):
             y = image_start_y + (PADDING + image_height_per_img) * y
             img.paste(new_img, box=(x, y))
             draw.text((x + PADDING, y + PADDING), get_time_display(timestamp), TIMESTAMP_COLOR, font=font)
-
+        os.chdir(savedir)
         img.save(jpg_name)
+        os.chdir(dirname)
         print('OK!')
     except Exception as e:
         traceback.print_exc()
@@ -107,11 +124,12 @@ def create_thumbnail(filename):
 if __name__ == "__main__":
     p = input("Input the path you want to process: ")
     p = os.path.abspath(p)
-
+    op = input("Input the output path where to save the img ")
+    op = os.path.abspath(op)
     for root, dirs, files in os.walk(p):
         print('Switch to root %s...' % root)
         os.chdir(root)
         for file in files:
-            ext_regex = r"\.(mov|mp4|mpg|mov|mpeg|flv|wmv|avi|mkv)$"
+            ext_regex = r"\.(mov|mp4|mpg|mov|mpeg|flv|wmv|avi|mkv|ts|ts2)$"
             if re.search(ext_regex, file, re.IGNORECASE):
-                create_thumbnail(file)
+                create_thumbnail(file,root)
