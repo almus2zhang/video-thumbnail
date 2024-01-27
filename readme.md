@@ -27,5 +27,7 @@ ridiculous bug in PyAV which nobody cares. I would really appreciate it if someo
 ## 修改后使用要点
 
 1 需要在py文件内指定font文件的绝对路径
+
 2 运行后第一个输入处理的目录，第二个输入输出目录，会按照原有目录结构在输出目录下创建
+
 3 可以自行修改大小以及不想要的信息
